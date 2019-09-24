@@ -18,11 +18,13 @@ import { Emitter } from '@theia/core/lib/common/event';
 import { RPCProtocolImpl } from '../../common/rpc-protocol';
 import { PluginHostRPC } from './plugin-host-rpc';
 console.log('PLUGIN_HOST(' + process.pid + ') starting instance');
+console.error('>>>> TEST CHANGES ARE APPLIED');
 
 // override exit() function, to do not allow plugin kill this node
 process.exit = function (code?: number): void {
     const err = new Error('An plugin call process.exit() and it was prevented.');
     console.warn(err.stack);
+    console.error('>>>> Unexpected exit in process.exit with code: ' + code);
 } as (code?: number) => never;
 
 // same for 'crash'(works only in electron)
@@ -32,11 +34,14 @@ if (proc.crash) {
     proc.crash = function (): void {
         const err = new Error('An plugin call process.crash() and it was prevented.');
         console.warn(err.stack);
+        console.error('>>>> Unexpected crash in proc.crash');
     };
 }
 
 process.on('uncaughtException', (err: Error) => {
     console.error(err);
+    console.error('>>>> Uncaught exception');
+    console.warn(err.stack);
 });
 
 // tslint:disable-next-line: no-any
@@ -44,6 +49,7 @@ const unhandledPromises: Promise<any>[] = [];
 
 // tslint:disable-next-line: no-any
 process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
+    console.error('>>>> Unhandled promise rejection');
     unhandledPromises.push(promise);
     setTimeout(() => {
         const index = unhandledPromises.indexOf(promise);
@@ -81,6 +87,7 @@ process.on('message', (message: string) => {
     try {
         emitter.fire(JSON.parse(message));
     } catch (e) {
+        console.error('>>>> on message error', e.stack);
         console.error(e);
     }
 });

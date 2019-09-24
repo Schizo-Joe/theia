@@ -76,6 +76,7 @@ export class PluginHostRPC {
             const backendInit = require(contextPath);
             backendInit.doInitialization(this.apiFactory, plugin);
         } catch (e) {
+            console.error('>>>> Error in PluginHostRPC.initContext');
             console.error(e);
         }
     }
@@ -125,6 +126,7 @@ export class PluginHostRPC {
                     });
                     return require(plugin.pluginPath);
                 } catch (e) {
+                    console.error('>>>> Error in load plugin');
                     console.error(e);
                 }
             },
@@ -173,6 +175,7 @@ export class PluginHostRPC {
                             const extApiInit = require(api.backendInitPath);
                             extApiInit.provideApi(rpc, pluginManager);
                         } catch (e) {
+                            console.error('>>>> Error in initExtApi');
                             console.error(e);
                         }
                     }

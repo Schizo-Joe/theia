@@ -13,9 +13,9 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
-import { inject, injectable, named } from 'inversify';
 import { Emitter, Event, ILogger } from '@theia/core/lib/common';
 import { BackendApplicationContribution } from '@theia/core/lib/node';
+import { inject, injectable, named } from 'inversify';
 import { Task } from './task';
 
 // inspired by process-manager.ts
@@ -23,6 +23,7 @@ import { Task } from './task';
 @injectable()
 export class TaskManager implements BackendApplicationContribution {
 
+    private readonly DELETE_TASK_TIMEOUT: number = 1000 * 60;
     /** contains all running tasks */
     protected readonly tasks: Map<number, Task> = new Map();
     /** contains running tasks per context */
@@ -69,8 +70,12 @@ export class TaskManager implements BackendApplicationContribution {
         }
     }
 
+    markForDeletion(task: Task): void {
+        setTimeout(() => this.doDelete(task), this.DELETE_TASK_TIMEOUT);
+    }
+
     /** Deletes a task from the task manager */
-    delete(task: Task): void {
+    protected doDelete(task: Task): void {
         this.tasks.delete(task.id);
 
         const ctx = task.context;
@@ -92,7 +97,7 @@ export class TaskManager implements BackendApplicationContribution {
     onStop(): void {
         this.tasks.forEach((task: Task, id: number) => {
             this.logger.debug(`Task Backend application: onStop(): cleaning task id: ${id}`);
-            this.delete(task);
+            this.doDelete(task);
         });
     }
 }

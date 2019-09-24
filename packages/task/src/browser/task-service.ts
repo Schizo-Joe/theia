@@ -14,39 +14,39 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-import { inject, injectable, named, postConstruct } from 'inversify';
-import { EditorManager } from '@theia/editor/lib/browser';
-import { ILogger } from '@theia/core/lib/common';
 import { ApplicationShell, FrontendApplication, WidgetManager } from '@theia/core/lib/browser';
-import { QuickPickService, QuickPickItem } from '@theia/core/lib/common/quick-pick-service';
-import { TaskResolverRegistry, TaskProviderRegistry } from './task-contribution';
-import { TERMINAL_WIDGET_FACTORY_ID, TerminalWidgetFactoryOptions } from '@theia/terminal/lib/browser/terminal-widget-impl';
+import { open, OpenerService } from '@theia/core/lib/browser/opener-service';
+import { ILogger } from '@theia/core/lib/common';
+import { MessageService } from '@theia/core/lib/common/message-service';
+import { QuickPickItem, QuickPickService } from '@theia/core/lib/common/quick-pick-service';
+import URI from '@theia/core/lib/common/uri';
+import { EditorManager } from '@theia/editor/lib/browser';
+import { ProblemManager } from '@theia/markers/lib/browser/problem/problem-manager';
 import { TerminalService } from '@theia/terminal/lib/browser/base/terminal-service';
 import { TerminalWidget } from '@theia/terminal/lib/browser/base/terminal-widget';
-import { MessageService } from '@theia/core/lib/common/message-service';
-import { OpenerService, open } from '@theia/core/lib/browser/opener-service';
-import { ProblemManager } from '@theia/markers/lib/browser/problem/problem-manager';
-import { WorkspaceService } from '@theia/workspace/lib/browser/workspace-service';
+import { TerminalWidgetFactoryOptions, TERMINAL_WIDGET_FACTORY_ID } from '@theia/terminal/lib/browser/terminal-widget-impl';
 import { VariableResolverService } from '@theia/variable-resolver/lib/browser';
+import { WorkspaceService } from '@theia/workspace/lib/browser/workspace-service';
+import { inject, injectable, named, postConstruct } from 'inversify';
+import { Range } from 'vscode-languageserver-types';
 import {
     NamedProblemMatcher,
-    ProblemMatcher,
     ProblemMatchData,
+    ProblemMatcher,
+    RunTaskOption,
     TaskConfiguration,
     TaskCustomization,
     TaskExitedEvent,
     TaskInfo,
     TaskOutputProcessedEvent,
-    TaskServer,
-    RunTaskOption
+    TaskServer
 } from '../common';
 import { TaskWatcher } from '../common/task-watcher';
-import { TaskConfigurationClient, TaskConfigurations } from './task-configurations';
 import { ProvidedTaskConfigurations } from './provided-task-configurations';
+import { TaskConfigurationClient, TaskConfigurations } from './task-configurations';
+import { TaskProviderRegistry, TaskResolverRegistry } from './task-contribution';
 import { TaskDefinitionRegistry } from './task-definition-registry';
 import { ProblemMatcherRegistry } from './task-problem-matcher-registry';
-import { Range } from 'vscode-languageserver-types';
-import URI from '@theia/core/lib/common/uri';
 
 export interface QuickPickProblemMatcherItem {
     problemMatchers: NamedProblemMatcher[] | undefined;
@@ -418,15 +418,15 @@ export class TaskService implements TaskConfigurationClient {
         }
     }
 
-    async runTaskByLabel(taskLabel: string): Promise<boolean> {
+    async runTaskByLabel(taskLabel: string): Promise<TaskInfo | undefined> {
         const tasks: TaskConfiguration[] = await this.getTasks();
         for (const task of tasks) {
             if (task.label === taskLabel) {
-                await this.runTask(task);
-                return true;
+                return this.runTask(task);
             }
         }
-        return false;
+
+        return;
     }
 
     private async removeProblemMarks(option?: RunTaskOption): Promise<void> {
@@ -588,5 +588,13 @@ export class TaskService implements TaskConfigurationClient {
             return;
         }
         this.logger.debug(`Task killed. Task id: ${id}`);
+    }
+
+    async getCode(id: number): Promise<number | undefined> {
+        return this.taskServer.getCode(id);
+    }
+
+    async getSignal(id: number): Promise<string | undefined> {
+        return this.taskServer.getSignal(id);
     }
 }

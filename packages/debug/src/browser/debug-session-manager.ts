@@ -23,6 +23,7 @@ import URI from '@theia/core/lib/common/uri';
 import { EditorManager } from '@theia/editor/lib/browser';
 import { QuickOpenTask } from '@theia/task/lib/browser/quick-open-task';
 import { TaskService } from '@theia/task/lib/browser/task-service';
+import { TaskWatcher } from '@theia/task/lib/common';
 import { VariableResolverService } from '@theia/variable-resolver/lib/browser';
 import { inject, injectable, postConstruct } from 'inversify';
 import { DebugConfiguration } from '../common/debug-common';
@@ -133,6 +134,9 @@ export class DebugSessionManager {
     @inject(TaskService)
     protected readonly taskService: TaskService;
 
+    @inject(TaskWatcher)
+    protected readonly taskWatcher: TaskWatcher;
+
     @inject(DebugConfigurationManager)
     protected readonly debugConfigurationManager: DebugConfigurationManager;
 
@@ -157,7 +161,7 @@ export class DebugSessionManager {
         return this.progressService.withProgress('Start...', 'debug', async () => {
             try {
                 const resolved = await this.resolveConfiguration(options);
-                const taskRun = await this.runTaskAndCheckErrors(resolved.configuration.preLaunchTask);
+                const taskRun = await this.runTask(resolved.configuration.preLaunchTask, true);
                 if (!taskRun) {
                     return undefined;
                 }
@@ -397,14 +401,38 @@ export class DebugSessionManager {
      * @param taskLabel the task label to run
      * @return true if it is possible to continue debugging otherwise it returns false
      */
-    protected async runTaskAndCheckErrors(taskLabel: string | undefined): Promise<boolean> {
-        const runTask = await this.runTask(taskLabel);
-        if (runTask) {
+    protected async runTask(taskLabel: string | undefined, checkErrors?: boolean): Promise<boolean> {
+        if (!taskLabel) {
             return true;
         }
 
+        const taskInfo = await this.taskService.runTaskByLabel(taskLabel);
+        if (!checkErrors) {
+            return true;
+        }
+
+        if (!taskInfo) {
+            return this.doPostTaskAction(`Could not find the task '${taskLabel}'.`);
+        }
+
+        const code = await this.taskService.getCode(taskInfo.taskId);
+        if (code === 0) {
+            return true;
+        } else if (code !== undefined) {
+            return this.doPostTaskAction(`Task '${taskLabel}' terminated with exit code ${code}.`);
+        } else {
+            const signal = await this.taskService.getSignal(taskInfo.taskId);
+            if (signal !== undefined) {
+                return this.doPostTaskAction(`Task '${taskLabel}' terminated by signal ${signal}.`);
+            } else {
+                return this.doPostTaskAction(`Task '${taskLabel}' terminated for unknown reason.`);
+            }
+        }
+    }
+
+    protected async doPostTaskAction(errorMessage: string): Promise<boolean> {
         const actions = ['Open launch.json', 'Cancel', 'Configure Task', 'Debug Anyway'];
-        const result = await this.messageService.error(`Could not run the task '${taskLabel}'`, ...actions);
+        const result = await this.messageService.error(errorMessage, ...actions);
         switch (result) {
             case actions[0]: // open launch.json
                 this.debugConfigurationManager.openConfiguration();
@@ -417,19 +445,5 @@ export class DebugSessionManager {
             default: // continue debugging
                 return true;
         }
-    }
-
-    protected async runTask(taskLabel: string | undefined): Promise<boolean> {
-        if (!taskLabel) {
-            return true;
-        }
-
-        const runTask = await this.taskService.runTaskByLabel(taskLabel);
-        if (!runTask) {
-            const errorMessage = `Could not run the task '${taskLabel}'`;
-            console.error(errorMessage);
-        }
-
-        return runTask;
     }
 }

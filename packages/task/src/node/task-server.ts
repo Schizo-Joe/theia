@@ -87,7 +87,7 @@ export class TaskServerImpl implements TaskServer, Disposable {
         }
         this.toDispose.get(task.id)!.push(
             task.onExit(event => {
-                this.taskManager.delete(task);
+                this.taskManager.markForDeletion(task);
                 this.fireTaskExitedEvent(event);
                 this.removedCachedProblemCollector(event.ctx || '', event.taskId);
                 this.disposeByTaskId(event.taskId);
@@ -168,6 +168,16 @@ export class TaskServerImpl implements TaskServer, Disposable {
             this.logger.info(`Could not find task to kill, task id ${id}. Already terminated?`);
             return Promise.reject(new Error(`Could not find task to kill, task id ${id}. Already terminated?`));
         }
+    }
+
+    async getCode(id: number): Promise<number | undefined> {
+        const task = this.taskManager.get(id);
+        return task && task.code || undefined;
+    }
+
+    async getSignal(id: number): Promise<string | undefined> {
+        const task = this.taskManager.get(id);
+        return task && task.signal || undefined;
     }
 
     /** Adds a client to this server */

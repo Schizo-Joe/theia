@@ -18,6 +18,7 @@ import { injectable } from 'inversify';
 import { ILogger, Disposable, DisposableCollection, Emitter, Event, MaybePromise } from '@theia/core/lib/common/';
 import { TaskManager } from './task-manager';
 import { TaskInfo, TaskExitedEvent, TaskConfiguration, TaskOutputEvent } from '../common/task-protocol';
+import { Deferred } from '@theia/core/lib/common/promise-util';
 
 export interface TaskOptions {
     label: string;
@@ -29,6 +30,8 @@ export interface TaskOptions {
 export abstract class Task implements Disposable {
 
     protected taskId: number;
+    protected readonly codeDeferred = new Deferred<number | undefined>();
+    protected readonly signalDeferred = new Deferred<string | undefined>();
     protected readonly toDispose: DisposableCollection = new DisposableCollection();
     readonly exitEmitter: Emitter<TaskExitedEvent>;
     readonly outputEmitter: Emitter<TaskOutputEvent>;
@@ -58,6 +61,8 @@ export abstract class Task implements Disposable {
 
     /** Has to be called when a task has concluded its execution. */
     protected fireTaskExited(event: TaskExitedEvent): void {
+        this.codeDeferred.resolve(event.code);
+        this.signalDeferred.resolve(event.signal);
         this.exitEmitter.fire(event);
     }
 
@@ -78,6 +83,14 @@ export abstract class Task implements Disposable {
 
     get label(): string {
         return this.options.label;
+    }
+
+    get code(): Promise<number | undefined> {
+        return this.codeDeferred.promise;
+    }
+
+    get signal(): Promise<string | undefined> {
+        return this.signalDeferred.promise;
     }
 
     dispose(): void {

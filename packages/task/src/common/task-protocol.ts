@@ -68,6 +68,10 @@ export interface TaskServer extends JsonRpcServer<TaskClient> {
     run(task: TaskConfiguration, ctx?: string, option?: RunTaskOption): Promise<TaskInfo>;
     /** Kill a task, by id. */
     kill(taskId: number): Promise<void>;
+    /** Gets exit code */
+    getCode(taskId: number): Promise<number | undefined>;
+    /** Gets signal */
+    getSignal(taskId: number): Promise<string | undefined>;
     /**
      * Returns a list of currently running tasks. If a context is provided,
      * only the tasks started in that context will be provided. Using an

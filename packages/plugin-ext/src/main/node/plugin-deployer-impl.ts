@@ -126,7 +126,9 @@ export class PluginDeployerImpl implements PluginDeployer {
                     await this.applyFileHandlers(pluginDeployerEntries);
                     await this.applyDirectoryFileHandlers(pluginDeployerEntries);
                     for (const deployerEntry of pluginDeployerEntries) {
-                        const metadata = await this.pluginDeployerHandler.getPluginMetadata(deployerEntry);
+                        const metadata = await this.pluginDeployerHandler.getPluginMetadata(deployerEntry, {
+                            dependencies: true
+                        });
                         if (metadata && !pluginsToDeploy.has(metadata.model.id)) {
                             pluginsToDeploy.set(metadata.model.id, deployerEntry);
                             chunk.push(metadata);

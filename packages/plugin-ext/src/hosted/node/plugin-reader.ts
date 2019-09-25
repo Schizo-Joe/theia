@@ -23,7 +23,7 @@ import * as escape_html from 'escape-html';
 import { ILogger } from '@theia/core';
 import { inject, injectable, optional, multiInject } from 'inversify';
 import { BackendApplicationContribution } from '@theia/core/lib/node/backend-application';
-import { PluginMetadata, getPluginId, MetadataProcessor } from '../../common/plugin-protocol';
+import { PluginMetadata, getPluginId, MetadataProcessor, PluginModelOptions } from '../../common/plugin-protocol';
 import { MetadataScanner } from './metadata-scanner';
 
 @injectable()
@@ -77,33 +77,33 @@ export class HostedPluginReader implements BackendApplicationContribution {
         res.status(404).send(`The plugin with id '${escape_html(pluginId)}' does not exist.`);
     }
 
-    async getPluginMetadata(pluginPath: string): Promise<PluginMetadata | undefined> {
-        return this.doGetPluginMetadata(pluginPath);
+    async getPluginMetadata(pluginPath: string, options: PluginModelOptions): Promise<PluginMetadata | undefined> {
+        return this.doGetPluginMetadata(pluginPath, options);
     }
 
     /**
      * MUST never throw to isolate plugin deployment
      */
-    async doGetPluginMetadata(pluginPath: string | undefined): Promise<PluginMetadata | undefined> {
+    async doGetPluginMetadata(pluginPath: string | undefined, options: PluginModelOptions): Promise<PluginMetadata | undefined> {
         try {
             if (!pluginPath) {
                 return undefined;
             }
             pluginPath = path.normalize(pluginPath + '/');
-            return await this.loadPluginMetadata(pluginPath);
+            return await this.loadPluginMetadata(pluginPath, options);
         } catch (e) {
             this.logger.error(`Failed to load plugin metadata from "${pluginPath}"`, e);
             return undefined;
         }
     }
 
-    protected async loadPluginMetadata(pluginPath: string): Promise<PluginMetadata | undefined> {
+    protected async loadPluginMetadata(pluginPath: string, options: PluginModelOptions): Promise<PluginMetadata | undefined> {
         const manifest = await this.loadManifest(pluginPath);
         if (!manifest) {
             return undefined;
         }
         manifest.packagePath = pluginPath;
-        const pluginMetadata = this.scanner.getPluginMetadata(manifest);
+        const pluginMetadata = this.scanner.getPluginMetadata(manifest, options);
         if (pluginMetadata.model.entryPoint.backend) {
             pluginMetadata.model.entryPoint.backend = path.resolve(pluginPath, pluginMetadata.model.entryPoint.backend);
         }

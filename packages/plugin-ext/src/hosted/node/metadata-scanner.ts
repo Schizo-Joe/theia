@@ -15,7 +15,7 @@
  ********************************************************************************/
 
 import { injectable, multiInject } from 'inversify';
-import { PluginPackage, PluginScanner, PluginMetadata } from '../../common/plugin-protocol';
+import { PluginPackage, PluginScanner, PluginMetadata, PluginModelOptions } from '../../common/plugin-protocol';
 
 @injectable()
 export class MetadataScanner {
@@ -29,12 +29,12 @@ export class MetadataScanner {
         });
     }
 
-    getPluginMetadata(plugin: PluginPackage): PluginMetadata {
+    getPluginMetadata(plugin: PluginPackage, options: PluginModelOptions): PluginMetadata {
         const scanner = this.getScanner(plugin);
         return {
             host: 'main',
             source: plugin,
-            model: scanner.getModel(plugin),
+            model: scanner.getModel(plugin, options),
             lifecycle: scanner.getLifecycle(plugin)
         };
     }

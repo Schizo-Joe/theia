@@ -15,7 +15,7 @@
  ********************************************************************************/
 
 import { injectable } from 'inversify';
-import { PluginScanner, PluginEngine, PluginPackage, PluginModel, PluginLifecycle } from '@theia/plugin-ext';
+import { PluginScanner, PluginEngine, PluginPackage, PluginModel, PluginLifecycle, PluginModelOptions } from '@theia/plugin-ext';
 import { TheiaPluginScanner } from '@theia/plugin-ext/lib/hosted/node/scanners/scanner-theia';
 
 @injectable()
@@ -27,7 +27,7 @@ export class VsCodePluginScanner extends TheiaPluginScanner implements PluginSca
         return this.VSCODE_TYPE;
     }
 
-    getModel(plugin: PluginPackage): PluginModel {
+    getModel(plugin: PluginPackage, options: PluginModelOptions): PluginModel {
         // translate vscode builtins, as they are published with a prefix. See https://github.com/theia-ide/vscode-builtin-extensions/blob/master/src/republish.js#L50
         const built_prefix = '@theia/vscode-builtin-';
         if (plugin && plugin.name && plugin.name.startsWith(built_prefix)) {
@@ -47,10 +47,14 @@ export class VsCodePluginScanner extends TheiaPluginScanner implements PluginSca
             },
             entryPoint: {
                 backend: plugin.main
-            },
-            extensionDependencies: this.getDeployableDependencies(plugin.extensionDependencies || [])
+            }
         };
-        result.contributes = this.readContributions(plugin);
+        if (options.contributions) {
+            result.contributes = this.readContributions(plugin);
+        }
+        if (options.dependencies) {
+            result.extensionDependencies = this.getDeployableDependencies(plugin.extensionDependencies || []);
+        }
         return result;
     }
 

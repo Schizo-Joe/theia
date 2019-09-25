@@ -311,7 +311,17 @@ export class HostedPluginSupport {
             if (!manager) {
                 return;
             }
-            const plugins = hostContributions.map(contributions => contributions.plugin);
+            const plugins = hostContributions.map(contributions => {
+                const metadata = {
+                    ...contributions.plugin,
+                    model: {
+                        ...contributions.plugin.model
+                    }
+                };
+                // remove contributions info in order to reduce size of JSON-RPC messages
+                delete metadata.model.contributes;
+                return metadata;
+            });
             thenable.push((async () => {
                 try {
                     const activationEvents = [...this.activationEvents];

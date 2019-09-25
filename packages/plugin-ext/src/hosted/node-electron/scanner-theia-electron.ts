@@ -16,11 +16,11 @@
 
 import { TheiaPluginScanner } from '../node/scanners/scanner-theia';
 import { injectable } from 'inversify';
-import { PluginPackage, PluginModel } from '../../common/plugin-protocol';
+import { PluginPackage, PluginModel, PluginModelOptions } from '../../common/plugin-protocol';
 @injectable()
 export class TheiaPluginScannerElectron extends TheiaPluginScanner {
-    getModel(plugin: PluginPackage): PluginModel {
-        const result = super.getModel(plugin);
+    getModel(plugin: PluginPackage, options: PluginModelOptions): PluginModel {
+        const result = super.getModel(plugin, options);
         if (result.entryPoint.frontend) {
             result.entryPoint.frontend = plugin.packagePath + result.entryPoint.frontend;
         }

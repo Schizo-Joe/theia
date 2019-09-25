@@ -204,6 +204,13 @@ export interface PluginProblemPatternContribution extends ProblemPatternContribu
     name: string;
 }
 
+export interface PluginModelOptions {
+    /** whether to load contributions info */
+    contributions?: boolean
+    /** whether to load dependencies info */
+    dependencies?: boolean
+}
+
 export const PluginScanner = Symbol('PluginScanner');
 /**
  * This scanner process package.json object and returns plugin metadata objects.
@@ -220,7 +227,7 @@ export interface PluginScanner {
      * @param {PluginPackage} plugin
      * @returns {PluginModel}
      */
-    getModel(plugin: PluginPackage): PluginModel;
+    getModel(plugin: PluginPackage, options: PluginModelOptions): PluginModel;
 
     /**
      * Creates plugin's lifecycle.
@@ -378,12 +385,18 @@ export interface PluginModel {
         frontend?: string;
         backend?: string;
     };
+
+    // frontend contributions info -- start
     contributes?: PluginContribution;
+    // frontend contributions info -- end
+
+    // backend dependencies info -- start
     /**
      * The deployable form of extensionDependencies from package.json,
      * i.e. not `publisher.name`, but `vscode:extension/publisher.name`.
      */
     extensionDependencies?: string[];
+    // backend dependencies info -- end
 }
 
 /**
@@ -615,7 +628,7 @@ export interface PluginDeployerHandler {
     deployFrontendPlugins(frontendPlugins: PluginDeployerEntry[]): Promise<void>;
     deployBackendPlugins(backendPlugins: PluginDeployerEntry[]): Promise<void>;
 
-    getPluginMetadata(pluginToBeInstalled: PluginDeployerEntry): Promise<PluginMetadata | undefined>
+    getPluginMetadata(pluginToBeInstalled: PluginDeployerEntry, options: PluginModelOptions): Promise<PluginMetadata | undefined>
 }
 
 export interface GetDeployedPluginsParams {

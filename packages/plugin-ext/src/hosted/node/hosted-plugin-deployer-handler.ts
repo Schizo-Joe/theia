@@ -16,7 +16,7 @@
 
 import { injectable, inject } from 'inversify';
 import { ILogger } from '@theia/core';
-import { PluginDeployerHandler, PluginDeployerEntry, PluginMetadata } from '../../common/plugin-protocol';
+import { PluginDeployerHandler, PluginDeployerEntry, PluginMetadata, PluginModelOptions } from '../../common/plugin-protocol';
 import { HostedPluginReader } from './plugin-reader';
 import { Deferred } from '@theia/core/lib/common/promise-util';
 
@@ -65,13 +65,13 @@ export class HostedPluginDeployerHandler implements PluginDeployerHandler {
         return this.currentFrontendPluginsMetadata.get(pluginId);
     }
 
-    getPluginMetadata(plugin: PluginDeployerEntry): Promise<PluginMetadata | undefined> {
-        return this.reader.getPluginMetadata(plugin.path());
+    getPluginMetadata(plugin: PluginDeployerEntry, options: PluginModelOptions): Promise<PluginMetadata | undefined> {
+        return this.reader.getPluginMetadata(plugin.path(), options);
     }
 
     async deployFrontendPlugins(frontendPlugins: PluginDeployerEntry[]): Promise<void> {
         for (const plugin of frontendPlugins) {
-            const metadata = await this.reader.getPluginMetadata(plugin.path());
+            const metadata = await this.getPluginMetadata(plugin, { contributions: true });
             if (metadata) {
                 if (this.currentFrontendPluginsMetadata.has(metadata.model.id)) {
                     continue;
@@ -88,7 +88,7 @@ export class HostedPluginDeployerHandler implements PluginDeployerHandler {
 
     async deployBackendPlugins(backendPlugins: PluginDeployerEntry[]): Promise<void> {
         for (const plugin of backendPlugins) {
-            const metadata = await this.reader.getPluginMetadata(plugin.path());
+            const metadata = await this.reader.getPluginMetadata(plugin.path(), { contributions: true });
             if (metadata) {
                 if (this.currentBackendPluginsMetadata.has(metadata.model.id)) {
                     continue;

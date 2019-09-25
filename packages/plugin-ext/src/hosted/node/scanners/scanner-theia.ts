@@ -43,7 +43,8 @@ import {
     SnippetContribution,
     PluginPackageCommand,
     PluginCommand,
-    IconUrl
+    IconUrl,
+    PluginModelOptions
 } from '../../../common/plugin-protocol';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -82,7 +83,7 @@ export class TheiaPluginScanner implements PluginScanner {
         return this._apiType;
     }
 
-    getModel(plugin: PluginPackage): PluginModel {
+    getModel(plugin: PluginPackage, options: PluginModelOptions): PluginModel {
         const result: PluginModel = {
             // see id definition: https://github.com/microsoft/vscode/blob/15916055fe0cb9411a5f36119b3b012458fe0a1d/src/vs/platform/extensions/common/extensions.ts#L167-L169
             id: `${plugin.publisher.toLowerCase()}.${plugin.name.toLowerCase()}`,
@@ -98,10 +99,14 @@ export class TheiaPluginScanner implements PluginScanner {
             entryPoint: {
                 frontend: plugin.theiaPlugin!.frontend,
                 backend: plugin.theiaPlugin!.backend
-            },
-            extensionDependencies: plugin.extensionDependencies || []
+            }
         };
-        result.contributes = this.readContributions(plugin);
+        if (options.contributions) {
+            result.contributes = this.readContributions(plugin);
+        }
+        if (options.dependencies) {
+            // skip it since there is no way to load transitive dependencies for Theia plugins yet
+        }
         return result;
     }
 

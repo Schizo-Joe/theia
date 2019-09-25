@@ -12,6 +12,7 @@ Breaking changes:
 - [core][monaco][plugin] reload plugins on reconnection [6159](https://github.com/eclipse-theia/theia/pull/6159)
   - Extenders should implement `Disposable` for plugin main services to handle reconnection properly.
   - Many APIs are refactored to return `Disposable`.
+- [task] removed `TaskConfigurations.watcherServer`, `TaskConfigurations.fileSystem`, `TaskConfigurations.configFileUris`, `TaskConfigurations.watchConfigurationFile()` and `TaskConfigurations.unwatchConfigurationFile()` [?](https://github.com/theia-ide/theia/pull/?)
 
 Misc:
 

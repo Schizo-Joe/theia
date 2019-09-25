@@ -20,8 +20,8 @@ import * as theia from '@theia/plugin';
 import URI from 'vscode-uri';
 import { Breakpoint } from '../../../common/plugin-api-rpc-model';
 import { DebugExt, DebugMain, PLUGIN_RPC_CONTEXT as Ext, TerminalOptionsExt } from '../../../common/plugin-api-rpc';
+import { PluginPackageDebuggersContribution } from '../../../common/plugin-protocol';
 import { RPCProtocol } from '../../../common/rpc-protocol';
-import { DebuggerContribution } from '../../../common';
 import { PluginWebSocketChannel } from '../../../common/connection';
 import { CommandRegistryImpl } from '../../command-registry';
 import { ConnectionExtImpl } from '../../connection-ext';
@@ -45,7 +45,11 @@ export class DebugExtImpl implements DebugExt {
 
     // providers by type
     private configurationProviders = new Map<string, Set<theia.DebugConfigurationProvider>>();
-    private debuggersContributions = new Map<string, DebuggerContribution>();
+    /**
+     * Only use internally, don't send it to the frontend. It's expensive!
+     * It's already there as a part of the plugin metadata.
+     */
+    private debuggersContributions = new Map<string, PluginPackageDebuggersContribution>();
     private descriptorFactories = new Map<string, theia.DebugAdapterDescriptorFactory>();
     private trackerFactories: [string, theia.DebugAdapterTrackerFactory][] = [];
     private contributionPaths = new Map<string, string>();
@@ -86,8 +90,8 @@ export class DebugExtImpl implements DebugExt {
      * @param pluginFolder plugin folder path
      * @param contributions available debuggers contributions
      */
-    registerDebuggersContributions(pluginFolder: string, contributions: DebuggerContribution[]): void {
-        contributions.forEach((contribution: DebuggerContribution) => {
+    registerDebuggersContributions(pluginFolder: string, contributions: PluginPackageDebuggersContribution[]): void {
+        contributions.forEach(contribution => {
             this.contributionPaths.set(contribution.type, pluginFolder);
             this.debuggersContributions.set(contribution.type, contribution);
             this.proxy.$registerDebuggerContribution({

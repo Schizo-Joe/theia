@@ -385,17 +385,24 @@ export interface PluginModel {
         frontend?: string;
         backend?: string;
     };
+    packagePath: string;
 
     // frontend contributions info -- start
     contributes?: PluginContribution;
+    activationEvents?: string[];
     // frontend contributions info -- end
 
     // backend dependencies info -- start
     /**
-     * The deployable form of extensionDependencies from package.json,
-     * i.e. not `publisher.name`, but `vscode:extension/publisher.name`.
+     * The deployable form of `rawExtensionDependencies`,
+     * e.g. not `publisher.name`, but `vscode:extension/publisher.name`.
      */
     extensionDependencies?: string[];
+    /**
+     * The extension dependencies as they defined in plugin package.json,
+     * e.g. in `publisher.name` form.
+     */
+    rawExtensionDependencies?: string[];
     // backend dependencies info -- end
 }
 
@@ -596,7 +603,6 @@ export interface ExtensionContext {
 
 export interface PluginMetadata {
     host: string;
-    source: PluginPackage;
     model: PluginModel;
     lifecycle: PluginLifecycle;
 }

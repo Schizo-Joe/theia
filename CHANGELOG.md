@@ -12,6 +12,10 @@ Breaking changes:
 - [core][monaco][plugin] reload plugins on reconnection [6159](https://github.com/eclipse-theia/theia/pull/6159)
   - Extenders should implement `Disposable` for plugin main services to handle reconnection properly.
   - Many APIs are refactored to return `Disposable`.
+- [plugin] don't block web socket with many plugins [6252](https://github.com/eclipse-theia/theia/pull/6252)
+  - frontend plugins don't have access to raw package.json model anymore
+  - backend plugins don't have access to `PluginModel.contributes` anymore, read them from raw package.json model instead
+  - `PluginManagerExt.$init` does not start plugins anymore, but only initialize the manager RPC services, call `$start` to start plugins
 
 Misc:
 

@@ -14,10 +14,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  ********************************************************************************/
 
-// tslint:disable:no-any
-
 import * as path from 'path';
-import * as fs from 'fs-extra';
 import * as express from 'express';
 import * as escape_html from 'escape-html';
 import { ILogger } from '@theia/core';
@@ -25,6 +22,7 @@ import { inject, injectable, optional, multiInject } from 'inversify';
 import { BackendApplicationContribution } from '@theia/core/lib/node/backend-application';
 import { PluginMetadata, getPluginId, MetadataProcessor, PluginModelOptions } from '../../common/plugin-protocol';
 import { MetadataScanner } from './metadata-scanner';
+import { loadManifest } from './plugin-manifest-loader';
 
 @injectable()
 export class HostedPluginReader implements BackendApplicationContribution {
@@ -98,7 +96,7 @@ export class HostedPluginReader implements BackendApplicationContribution {
     }
 
     protected async loadPluginMetadata(pluginPath: string, options: PluginModelOptions): Promise<PluginMetadata | undefined> {
-        const manifest = await this.loadManifest(pluginPath);
+        const manifest = await loadManifest(pluginPath);
         if (!manifest) {
             return undefined;
         }
@@ -118,56 +116,5 @@ export class HostedPluginReader implements BackendApplicationContribution {
         }
         return pluginMetadata;
     }
-
-    protected async loadManifest(pluginPath: string): Promise<any> {
-        const [manifest, translations] = await Promise.all([
-            fs.readJson(path.join(pluginPath, 'package.json')),
-            this.loadTranslations(pluginPath)
-        ]);
-        return manifest && translations && Object.keys(translations).length ?
-            this.localize(manifest, translations) :
-            manifest;
-    }
-
-    protected async loadTranslations(pluginPath: string): Promise<any> {
-        try {
-            return await fs.readJson(path.join(pluginPath, 'package.nls.json'));
-        } catch (e) {
-            if (e.code !== 'ENOENT') {
-                throw e;
-            }
-            return {};
-        }
-    }
-
-    protected localize(value: any, translations: {
-        [key: string]: string
-    }): any {
-        if (typeof value === 'string') {
-            const match = HostedPluginReader.NLS_REGEX.exec(value);
-            return match && translations[match[1]] || value;
-        }
-        if (Array.isArray(value)) {
-            const result = [];
-            for (const item of value) {
-                result.push(this.localize(item, translations));
-            }
-            return result;
-        }
-        if (value === null) {
-            return value;
-        }
-        if (typeof value === 'object') {
-            const result: { [key: string]: any } = {};
-            // tslint:disable-next-line:forin
-            for (const propertyName in value) {
-                result[propertyName] = this.localize(value[propertyName], translations);
-            }
-            return result;
-        }
-        return value;
-    }
-
-    static NLS_REGEX = /^%([\w\d.-]+)%$/i;
 
 }

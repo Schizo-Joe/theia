@@ -139,7 +139,7 @@ export class PluginDeployerImpl implements PluginDeployer {
                 }
             }
             for (const metadata of chunk) {
-                const extensionDependencies = metadata.source.extensionDependencies;
+                const extensionDependencies = metadata.model.rawExtensionDependencies;
                 const deployableExtensionDependencies = metadata.model.extensionDependencies;
                 if (extensionDependencies && deployableExtensionDependencies) {
                     for (let dependencyIndex = 0; dependencyIndex < extensionDependencies.length; dependencyIndex++) {

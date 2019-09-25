@@ -320,6 +320,7 @@ export class HostedPluginSupport {
                 };
                 // remove contributions info in order to reduce size of JSON-RPC messages
                 delete metadata.model.contributes;
+                delete metadata.model.activationEvents;
                 return metadata;
             });
             thenable.push((async () => {
@@ -488,13 +489,13 @@ export class HostedPluginSupport {
     }
 
     protected async activateByWorkspaceContains(manager: PluginManagerExt, plugin: PluginMetadata): Promise<void> {
-        if (!plugin.source.activationEvents) {
+        if (!plugin.model.activationEvents) {
             return;
         }
         const paths: string[] = [];
         const includePatterns: string[] = [];
         // should be aligned with https://github.com/microsoft/vscode/blob/da5fb7d5b865aa522abc7e82c10b746834b98639/src/vs/workbench/api/node/extHostExtensionService.ts#L460-L469
-        for (const activationEvent of plugin.source.activationEvents) {
+        for (const activationEvent of plugin.model.activationEvents) {
             if (/^workspaceContains:/.test(activationEvent)) {
                 const fileNameOrGlob = activationEvent.substr('workspaceContains:'.length);
                 if (fileNameOrGlob.indexOf('*') >= 0 || fileNameOrGlob.indexOf('?') >= 0) {
